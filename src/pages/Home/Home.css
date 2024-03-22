@@ -1,0 +1,32 @@
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.the-input {
+    border: 1px solid transparent; /* Initially transparent border */
+    background-color: rgba(216, 215, 215, 0.453);
+}
+
+.the-input:focus-within {
+    border-color: blue; /* Change border color when input is focused */
+    background-color: white; /* Initially white background */
+}
+
+.the-input input:focus {
+    outline: none; /* Remove default focus outline */
+    background-color: transparent; /* Change input background color on focus */
+}
+.non-active-term{
+    display: none;
+}
+.lab label{
+    display: none !important;
+}
+.lab .relative{
+    min-width: 120px !important;
+    height: 10;
+}
+.selection:focus{
+    border: 1px solid blue !important;
+}
