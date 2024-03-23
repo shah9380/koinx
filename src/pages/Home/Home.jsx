@@ -1,47 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import sound from '../../assets/shooting-sound.mp3';
 import keysound from '../../assets/keytick.mp3';
 import './Home.css';
 import { Select, Option } from "@material-tailwind/react";
-import ReactFlagsSelect from "react-flags-select";
+
 
 function Home() {
     const [activeTerm, setActiveTerm] = useState(true);
     const [audio] = useState(new Audio(sound));
     const [key] = useState(new Audio(keysound));
+
+    const[purchasePrice, setPurchasePrice] = useState();
+    const[salePrice, setSalePrice] = useState();
+    const[expenses,setExpenses] = useState();
+    const[netCapitalGains, setNetCapitalGains] = useState(0);
+    const[capitalGains,setCapitalGains] = useState(0);
+    const[discount, setDiscount] =useState(0);
+    const[tax,setTax] = useState(0);
+    const[displayRate, setDisplayRate] = useState("0%");
+
     const annualIncome = [
         {
             value: 0,
-            option: "$0 - $18,200"
+            option: "$0 - $18,200",
+            display: "0%"
         },
         {
             value: 18201,
-            option: "$18,201 - $45,000"
+            option: "$18,201 - $45,000",
+            display: "Nil + 19% of the excess over $18,200"
         },
         {
             value: 45001,
-            option: "$45,001 - $120,000"
+            option: "$45,001 - $120,000",
+            display: "$5,092 + 32.5% of the excess over $45,000"
         },
         {
             value: 120001,
-            option: "$120,001 - $180,000"
+            option: "$120,001 - $180,000",
+            display: "$29,467 + 37% of the excess over $120,000"
         },
         {
             value: 180001,
-            option: "$180,001+"
+            option: "$180,001+",
+            display: "$51,667 + 45% of the excess over $180,000"
         }
     ];
     // Set the initial value to the first option's value
     const [income, setIncome] = React.useState(annualIncome[0].value);
     // Set the initial value to the first option's value
     const [finacialYear, setFinancialYear]= useState("FY 2023-24");
-    // Set the initial value to the first option's value
-    const [selected, setSelected] = useState("");
 
-    const handleChange = (event) => {
-        setIncome((event));
-    };
-    const handleFinacialYear = (event) =>{
+    const handleFinancialYear = (event) =>{
         setFinancialYear((event));
     }    
 
@@ -62,7 +72,77 @@ function Home() {
             playAudio();
         }
     };
+    const handleChange = (event)=>{
+        setIncome(event)
+    }
 
+    useEffect(()=>{
+            calculation();
+    },[salePrice, purchasePrice, expenses, income, activeTerm, netCapitalGains, capitalGains, tax, discount])
+
+
+    const handleInputChange = (event)=>{
+        const{name, value} = event.target;
+        if(name === "purchase"){
+            setPurchasePrice(value);
+        }else if(name === "sale"){
+            setSalePrice(value);
+        }else if(name === "expenses"){
+            setExpenses(value);
+        }else if(name === "annualIncome"){
+            setIncome(value);
+        }
+    }
+    const calculation = ()=>{
+        const gainCapital = (salePrice - purchasePrice - expenses).toFixed(2);
+        let taxRate = 0;
+        switch(income){
+            case annualIncome[0].value:
+                taxRate = 0;
+                setDisplayRate(annualIncome[0].display)
+                break;
+            case annualIncome[1].value:
+                taxRate = 19;
+                setDisplayRate(annualIncome[1].display)
+                break;
+            case annualIncome[2].value:
+                taxRate = 32.5;
+                setDisplayRate(annualIncome[2].display)
+                break;
+            case annualIncome[3].value:
+                taxRate = 37;
+                setDisplayRate(annualIncome[3].display)
+                break;
+            case annualIncome[4].value:
+                taxRate = 45;
+                setDisplayRate(annualIncome[4].display)
+                break;
+            default:
+                taxRate = 0;
+                setDisplayRate(annualIncome[0].display)
+                break;
+        }
+        setCapitalGains(gainCapital);
+        if(activeTerm){
+            setCapitalGains(gainCapital);
+            if(salePrice>=0 && purchasePrice>=0 && expenses>=0){
+                setNetCapitalGains(capitalGains);
+                setTax(((netCapitalGains/100) * taxRate).toFixed(2));
+            }
+        }else{
+            setCapitalGains(gainCapital);
+            if(gainCapital>=0){
+                setDiscount(gainCapital/2);
+            }else{
+                setDiscount(0);
+            }
+            if(salePrice>=0 && purchasePrice>=0 && expenses>=0){
+                setNetCapitalGains(capitalGains-discount);
+                setTax(((netCapitalGains/100) * taxRate).toFixed(2));
+            }
+        }
+        
+    }
     return (
         <main className='max-w-[1325px] mx-auto p-2 md:p-0 md:pt-8'>
             <section className='calculator w-[100%] md:max-w-[70%] bg-white px-2 md:px-16 py-10 rounded-md'>
@@ -71,7 +151,7 @@ function Home() {
                     <div className='flex flex-col md:flex-row md:items-center gap-1 w-[50%] md:gap-2 md:w-[50%]'>
                         <label>Financial Year</label>
                         <div className="lab grow">
-                            <Select className='md:w-[100%] text-black rounded-sm selection bg-gray-300/50 border-none' value={finacialYear} onChange={handleFinacialYear}>
+                            <Select className='md:w-[100%] text-black rounded-sm selection bg-gray-300/50 border-none' value={finacialYear} onChange={handleFinancialYear}>
                                         <Option className='outline-none'  value="FY 2023-24">
                                             FY 2023-24
                                         </Option>
@@ -81,7 +161,7 @@ function Home() {
                     <div className='flex flex-col md:flex-row md:items-center gap-1 gap-2 w-[50%] md:w-[50%]'>
                         <label>Country</label>
                         <div className="lab grow">
-                            <Select className='md:w-[100%] text-black rounded-sm selection bg-gray-300/50 border-none' value={finacialYear} onChange={handleFinacialYear}>
+                            <Select className='md:w-[100%] text-black rounded-sm selection bg-gray-300/50 border-none' value={finacialYear} onChange={handleFinancialYear}>
                                         <Option className='outline-none'  value="FY 2023-24">
                                             <div className='flex justify-start items-center'><span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <g clip-path="url(#clip0_0_281)">
@@ -110,14 +190,14 @@ function Home() {
                         <label htmlFor="the-input">Enter purchase price of Crypto</label>
                         <div className='the-input bg-gray-300/50 flex rounded-sm'>
                             <span className='p-2'>$</span>
-                            <input onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
+                            <input name='purchase' onChange={handleInputChange} min={0} onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
                         </div>
                     </div>
                     <div className='md:w-[50%]'>
                         <label htmlFor="the-input">Enter sale price of Crypto</label>
                         <div className='the-input bg-gray-300/50 flex rounded-sm'>
                             <span className='p-2'>$</span>
-                            <input onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
+                            <input name='sale' onChange={handleInputChange} min={0} onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
                         </div>
                     </div>
                     </div>
@@ -126,7 +206,7 @@ function Home() {
                             <label htmlFor="the-input">Enter your Expenses</label>
                             <div className='the-input bg-gray-300/50 flex rounded-sm  '>
                                 <span className='p-2'>$</span>
-                                <input onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
+                                <input name='expenses' onChange={handleInputChange} min={0} onInput={playKeySound} type="number" className='input w-full bg-transparent border-none outline-none'/>
                             </div>
                         </div>
                         <div className='md:w-[50%]'>
@@ -161,7 +241,7 @@ function Home() {
                         <div className='md:w-[50%]'>
                             <label htmlFor="AnnualIncome">Select Your Annual Income</label>
                             <div className="lab">
-                                <Select className='text-black rounded-sm selection bg-gray-300/50 border-none' value={income} onChange={handleChange}>
+                                <Select name='annualIncome' className='text-black rounded-sm selection bg-gray-300/50 border-none' value={income} onChange={handleChange}>
                                     {annualIncome.map((data) => (
                                         <Option className='outline-none' key={data.value} value={data.value}>
                                             {data.option}
@@ -171,33 +251,36 @@ function Home() {
                             </div>
                         </div>
                         <div className='flex justify-start items-center md:w-[50%]'>
-                            <small className='flex md:flex-col'><span>Tax Rate<span className='md:hidden mx-1'>:</span></span><span>$ 5,902 + 32.5% of excess over $45,001</span></small> 
+                            <small className='flex md:flex-col'><span>Tax Rate<span className='md:hidden mx-1'>:</span></span><span>{displayRate}</span></small> 
                         </div> 
                     </div>
-                    <div className='flex flex-col md:flex-row justify-between gap-8'>
-                        <div className='md:w-[50%]'>
-                            <label htmlFor="the-input">Capital gains amount</label>
-                            <div className='the-input bg-gray-300/50 flex rounded-sm  '>
-                                <span className='p-2'>$</span>
-                                <input onInput={playKeySound} disabled type="number" className='input w-full bg-transparent border-none outline-none' value={23}/>
+                    {   
+                        !activeTerm &&
+                        (<div className='flex flex-col md:flex-row justify-between gap-8'>
+                            <div className='md:w-[50%]'>
+                                <label htmlFor="the-input">Capital gains amount</label>
+                                <div className='the-input bg-gray-300/50 flex rounded-sm  '>
+                                    <span className='p-2'>$</span>
+                                    <input onInput={playKeySound} disabled type="number" className='input w-full bg-transparent border-none outline-none' value={capitalGains}/>
+                                </div>
                             </div>
-                        </div>
-                        <div className='md:w-[50%]'>
-                            <label htmlFor="the-input">Discount for long term gains</label>
-                            <div className='the-input bg-gray-300/50 flex rounded-sm  '>
-                                <span className='p-2'>$</span>
-                                <input onInput={playKeySound} disabled type="number" className='input w-full bg-transparent border-none outline-none' value={26}/>
+                            <div className='md:w-[50%]'>
+                                <label htmlFor="the-input">Discount for long term gains</label>
+                                <div className='the-input bg-gray-300/50 flex rounded-sm  '>
+                                    <span className='p-2'>$</span>
+                                    <input onInput={playKeySound} disabled type="number" className='input w-full bg-transparent border-none outline-none' value={discount}/>
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        </div>)
+                    }
                     <div className='flex flex-col md:flex-row items-center justify-center md:justify-between gap-8'>
                         <div className='bg-[#EBF9F4] w-[70%] md:w-[50%] text-center p-2 rounded-md'>
                             <h4>Net Capital gains tax amount</h4>
-                            <strong className='text-[rgb(15,186,131)]'>$ 2,500</strong>
+                            <strong className='text-[rgb(15,186,131)]'>$ {netCapitalGains}</strong>
                         </div>
                         <div className='bg-[#EBF2FF] w-[70%] md:w-[50%] text-center p-2 rounded-md'>
                             <h4>The tax you need to pay*</h4>
-                            <strong className='text-[rgb(1,65,207)]'>$ 812.5</strong>
+                            <strong className='text-[rgb(1,65,207)]'>$ {tax}</strong>
                         </div>
                     </div>
                 </div>  
